@@ -1,0 +1,72 @@
+prompts:
+  - title: "避免使用不安全函式 strcpy"
+    description: "檢查程式中是否存在不安全的 strcpy 呼叫，建議使用 strncpy 或其他安全的函式。"
+    severity: "HIGH"
+    
+  - title: "檢查無窮遞迴可能導致堆疊溢位"
+    description: "檢測函式內是否存在直接呼叫自身而無明確終止條件的遞迴。"
+    severity: "MEDIUM"
+
+  - title: "使用未初始化記憶體"
+    description: "檢查指標在解引用前是否已正確初始化。"
+    severity: "MEDIUM"
+
+  - title: "空指標解引用"
+    description: "檢查是否有將 NULL 指標直接解引用的情形。"
+    severity: "HIGH"
+
+  - title: "使用後釋放問題"
+    description: "檢查釋放後是否仍有對該記憶體進行使用的情況。"
+    severity: "HIGH"
+
+  - title: "記憶體洩漏"
+    description: "檢查 new 分配後是否未有對應的 delete 呼叫。"
+    severity: "MEDIUM"
+
+  - title: "雙重釋放"
+    description: "檢查同一記憶體是否被重複釋放。"
+    severity: "HIGH"
+
+  - title: "未驗證輸入長度"
+    description: "檢查對固定大小陣列輸入時，是否有適當的長度檢查。"
+    severity: "MEDIUM"
+
+  - title: "全域變數未同步修改"
+    description: "多執行緒環境中全域變數修改需有同步保護。"
+    severity: "MEDIUM"
+
+  - title: "常數條件錯誤"
+    description: "檢查 if 條件中是否存在不合理的常數比較。"
+    severity: "LOW"
+
+  - title: "無限迴圈"
+    description: "檢查是否存在 while(true) 且無中斷機制的迴圈。"
+    severity: "MEDIUM"
+
+  - title: "檢查 fopen 返回值"
+    description: "檢查 fopen 後是否有檢查返回值以處理錯誤。"
+    severity: "MEDIUM"
+
+  - title: "硬編碼敏感資訊"
+    description: "檢查程式中是否有硬編碼的密碼、金鑰等敏感資訊。"
+    severity: "MEDIUM"
+
+  - title: "未授權存取敏感檔案"
+    description: "檢查是否有直接存取系統敏感檔案，如 /etc/shadow。"
+    severity: "HIGH"
+
+  - title: "資訊洩漏"
+    description: "檢查輸出中是否包含敏感資訊（如 SecretKey）。"
+    severity: "MEDIUM"
+
+  - title: "資源飢餓"
+    description: "檢查是否存在無限忙碌迴圈，應適時加入休眠。"
+    severity: "MEDIUM"
+
+  - title: "危險的型別轉換"
+    description: "檢查是否存在對資料進行危險轉型，可能導致解析錯誤。"
+    severity: "MEDIUM"
+
+  - title: "平台特定 API 使用"
+    description: "檢查平台相關 API 的使用是否有妥善處理跨平台問題。"
+    severity: "LOW"
