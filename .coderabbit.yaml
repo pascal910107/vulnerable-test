@@ -1,0 +1,6 @@
+reviews:
+  tools:
+    ast-grep:
+      essential_rules: true
+      rule_dirs:
+        - "custom-rules"   # 此目錄下所有 YAML 檔案都會被讀取
