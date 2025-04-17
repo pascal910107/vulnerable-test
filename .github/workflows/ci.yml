@@ -53,11 +53,16 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: cpp, java, javascript, python
+          languages: cpp
           queries: "./queries/BufferOverflow.ql,./queries/UnboundedRecursion.ql,./queries/UninitializedMemory.ql,./queries/NullPointerDereference.ql,./queries/DoubleFree.ql,./queries/MemoryLeak.ql,./queries/UncheckedInput.ql,./queries/LogicalError.ql,./queries/InfiniteLoop.ql,./queries/UnhandledError.ql,./queries/HardCodedCredentials.ql,./queries/SensitiveFileAccess.ql,./queries/InformationDisclosure.ql,./queries/ResourceStarvation.ql,./queries/ProtocolParsing.ql"
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+      - name: Build with Custom Command
+        run: |
+          # 編譯指令範例，如有需要調整編譯參數或檔案名稱，請自行修改
+          g++ -std=c++17 -g -o vulnerable vulnerable.cpp
+        
+      # - name: Autobuild
+        # uses: github/codeql-action/autobuild@v3
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
