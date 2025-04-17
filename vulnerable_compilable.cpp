@@ -72,7 +72,7 @@ public:
         cout << "Admin Credentials: " << adminUser << " / " << adminPass << endl;
 
         // 模擬協定解析時，未檢查來源資料長度就進行複製操作
-        char packet[8] = "12345678";
+        char packet[8] = "1";
         char command[5] = {0};
         strncpy(command, packet, 10);  // 複製量超出 command 陣列大小
         command[4] = '\0';

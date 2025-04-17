@@ -1,0 +1,112 @@
+name: Static Analysis (Semgrep & CodeQL)
+
+on:
+  push:
+    branches: ["main", "develop", "*"]
+  pull_request:
+    branches: ["main", "develop", "*"]
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+  security-events: write
+  packages: read
+
+jobs:
+  semgrep:
+    name: Run Semgrep Scan
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    outputs:
+      semgrep_results: ${{ steps.check.outputs.semgrep_results }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Semgrep
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install semgrep
+
+      - name: Run Semgrep (JSON Output)
+        run: |
+          semgrep --config semgrep_rules.yml --json > semgrep-results.json || true
+
+      - name: Run Semgrep (SARIF Output)
+        run: |
+          semgrep --config semgrep_rules.yml --sarif > semgrep-results.sarif || true
+
+      - name: Upload SARIF Results to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep-results.sarif
+
+      - name: Upload Semgrep Results Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-results
+          path: semgrep-results.json
+
+      - name: Check Semgrep Results
+        id: check
+        run: |
+          EXIT_CODE=$(jq '.metadata.exit_code' semgrep-results.json)
+          echo "Semgrep Exit Code: $EXIT_CODE"
+          echo "::set-output name=semgrep_results::$EXIT_CODE"
+          exit 0
+
+  codeql:
+    name: Run CodeQL Analysis
+    needs: semgrep
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [cpp]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: |
+            ./queries/BufferOverflow.ql
+            ./queries/UnboundedRecursion.ql
+            ./queries/UninitializedMemory.ql
+            ./queries/NullPointerDereference.ql
+            ./queries/DoubleFree.ql
+            ./queries/MemoryLeak.ql
+            ./queries/UncheckedInput.ql
+            ./queries/LogicalError.ql
+            ./queries/InfiniteLoop.ql
+            ./queries/UnhandledError.ql
+            ./queries/HardCodedCredentials.ql
+            ./queries/SensitiveFileAccess.ql
+            ./queries/InformationDisclosure.ql
+            ./queries/ResourceStarvation.ql
+            ./queries/ProtocolParsing.ql
+
+      - name: Build with Custom Command
+        if: matrix.language == 'cpp'
+        run: |
+          g++ -std=c++17 -g -o vulnerable_compilable vulnerable_compilable.cpp
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+
+      # 如需額外上傳 SARIF，可取消下列註解並調整路徑：
+      - name: Upload CodeQL SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: codeql-results.sarif
