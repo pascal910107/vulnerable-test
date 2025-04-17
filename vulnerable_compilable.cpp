@@ -21,8 +21,7 @@ public:
         // 從檔案讀取指令，但未檢查檔案是否存在、也沒有驗證輸入長度
         char inputCommand[10] = {0};
         ifstream infile("/nonexistent_file.txt");
-        // 警告：本來指定複製長度超出陣列大小，這是漏洞的故意設計
-        infile.getline(inputCommand, 50);
+        infile.getline(inputCommand, 50);  // 讀取超過 inputCommand 陣列大小
 
         // 將長字串複製到較短的陣列（緩衝區溢位）
         char processedCommand[10] = {0};
@@ -33,7 +32,7 @@ public:
         // 動態記憶體配置，但未初始化內容即直接使用
         int *data = new int[5];
         cout << "Data[2] (可能未初始化): " << data[2] << endl;
-        // 注意：此處故意不釋放 data 以保留記憶體洩漏漏洞
+        // 注意：未 delete[] data （記憶體洩漏）
 
         // 多執行緒競爭更新全域變數（未使用同步機制）
         thread t1(&VulnerableServer::incrementCounter, this);
@@ -50,7 +49,7 @@ public:
         // 分配記憶體後，重複釋放（雙重釋放）
         int *doubleFreePtr = new int(100);
         delete doubleFreePtr;
-        delete doubleFreePtr;  // 故意的雙重釋放
+        delete doubleFreePtr;
 
         // 根據輸入內容來觸發無終止條件的遞迴呼叫
         if (inputCommand[0] == 'R') {
@@ -73,14 +72,13 @@ public:
         cout << "Admin Credentials: " << adminUser << " / " << adminPass << endl;
 
         // 模擬協定解析時，未檢查來源資料長度就進行複製操作
-        char packet[8] = "12345678";
+        char packet[8] = "1";
         char command[5] = {0};
-        // 複製超出 command 陣列大小（故意為漏洞設計）
-        strncpy(command, packet, 10);
+        strncpy(command, packet, 10);  // 複製量超出 command 陣列大小
         command[4] = '\0';
         cout << "Parsed Command: " << command << endl;
 
-        // 資源飢餓：無限迴圈不斷消耗 CPU 資源（此處故意保留漏洞）
+        // 資源飢餓：無限迴圈不斷消耗 CPU 資源（此處不做中斷）
         while (true) {
             for (volatile int i = 0; i < 1000000; i++);
         }
