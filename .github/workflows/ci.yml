@@ -27,15 +27,6 @@ jobs:
         run: |
           semgrep --config semgrep_rules.yml --json > semgrep-results.json || true
 
-      - name: Run Semgrep (SARIF Output)
-        run: |
-          semgrep --config semgrep_rules.yml --sarif > semgrep-results.sarif || true
-
-      - name: Upload SARIF Results to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: semgrep-results.sarif
-
       - name: Upload Semgrep Results
         uses: actions/upload-artifact@v4
         with:
@@ -63,22 +54,7 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: cpp, java, javascript, python
-          queries: |
-            ./queries/BufferOverflow.ql
-            ./queries/UnboundedRecursion.ql
-            ./queries/UninitializedMemory.ql
-            ./queries/NullPointerDereference.ql
-            ./queries/DoubleFree.ql
-            ./queries/MemoryLeak.ql
-            ./queries/UncheckedInput.ql
-            ./queries/LogicalError.ql
-            ./queries/InfiniteLoop.ql
-            ./queries/UnhandledError.ql
-            ./queries/HardCodedCredentials.ql
-            ./queries/SensitiveFileAccess.ql
-            ./queries/InformationDisclosure.ql
-            ./queries/ResourceStarvation.ql
-            ./queries/ProtocolParsing.ql
+          queries: "./queries/BufferOverflow.ql,./queries/UnboundedRecursion.ql,./queries/UninitializedMemory.ql,./queries/NullPointerDereference.ql,./queries/DoubleFree.ql,./queries/MemoryLeak.ql,./queries/UncheckedInput.ql,./queries/LogicalError.ql,./queries/InfiniteLoop.ql,./queries/UnhandledError.ql,./queries/HardCodedCredentials.ql,./queries/SensitiveFileAccess.ql,./queries/InformationDisclosure.ql,./queries/ResourceStarvation.ql,./queries/ProtocolParsing.ql"
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v2
