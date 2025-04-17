@@ -1,0 +1,194 @@
+rules:
+  # 1. 緩衝區溢位檢查：針對 strcpy 函數使用
+  - id: cpp-buffer-overflow-strcpy
+    languages: [cpp]
+    message: "使用 strcpy 可能造成緩衝區溢位，請確認目的緩衝區大小與來源資料長度。"
+    severity: ERROR
+    pattern: |
+      strcpy($DST, $SRC);
+    metadata:
+      cwe: "CWE-120: Buffer Copy without Checking Size of Input"
+
+  # 1. 緩衝區溢位檢查：針對 sprintf 函數使用
+  - id: cpp-buffer-overflow-sprintf
+    languages: [cpp]
+    message: "使用 sprintf 可能造成緩衝區溢位，請確認緩衝區大小與輸入長度。"
+    severity: ERROR
+    pattern: |
+      sprintf($BUF, $FORMAT, ...);
+    metadata:
+      cwe: "CWE-120: Buffer Copy without Checking Size of Input"
+
+  # 2. 無終止條件遞迴呼叫檢查：基礎版檢查函數內呼叫自身
+  - id: cpp-recursive-call
+    languages: [cpp]
+    message: "請確認此遞迴呼叫有適當的終止條件，以免發生堆疊溢位。"
+    severity: WARNING
+    pattern: |
+      $RET $FUNC($ARGS) {
+          ... $FUNC(...);
+      }
+    metadata:
+      cwe: "CWE-674: Uncontrolled Recursion"
+
+  # 3. 未初始化記憶體使用：變數宣告但無初始化
+  - id: cpp-uninitialized-variable
+    languages: [cpp]
+    message: "變數宣告時請記得初始化，以免產生未定義行為。"
+    severity: WARNING
+    pattern: |
+      $TYPE $VAR;
+    pattern-not: |
+      $TYPE $VAR = ...
+    metadata:
+      cwe: "CWE-457: Use of Uninitialized Variable"
+
+  # 4. 空指標解引用問題
+  - id: cpp-null-pointer-dereference
+    languages: [cpp]
+    message: "檢查是否對可能為 null 的指標進行解引用。"
+    severity: ERROR
+    pattern: |
+      *$PTR
+    metadata:
+      cwe: "CWE-476: NULL Pointer Dereference"
+
+  # 5. 野指標（釋放後未設為 nullptr）使用
+  - id: cpp-dangling-pointer
+    languages: [cpp]
+    message: "檢查指標在釋放記憶體後是否有進一步使用，建議在 delete 後將指標設為 nullptr。"
+    severity: WARNING
+    pattern: |
+      delete $PTR;
+      ... $PTR->...
+    metadata:
+      cwe: "CWE-416: Use After Free"
+
+  # 6. 記憶體洩漏：new 分配後未有 delete
+  - id: cpp-memory-leak
+    languages: [cpp]
+    message: "檢查 new 分配的記憶體是否有對應的釋放(delete)。"
+    severity: WARNING
+    pattern: |
+      $TYPE *$VAR = new $TYPE(...);
+    pattern-not: |
+      delete $VAR;
+    metadata:
+      cwe: "CWE-401: Memory Leak"
+
+  # 7. 雙重釋放記憶體的風險
+  - id: cpp-double-free
+    languages: [cpp]
+    message: "檢查是否存在對同一記憶體區塊雙重釋放的風險。"
+    severity: ERROR
+    pattern: |
+      delete $PTR;
+      ... delete $PTR;
+    metadata:
+      cwe: "CWE-415: Double Free"
+
+  # 8. 未驗證輸入導致緩衝區溢位：使用 gets 函數
+  - id: cpp-unsafe-input
+    languages: [cpp]
+    message: "使用 gets 不安全，請改用更安全的輸入函數（例如 fgets）。"
+    severity: ERROR
+    pattern: |
+      gets($ARG);
+    metadata:
+      cwe: "CWE-242: Use of Inherently Dangerous Function"
+
+  # 9. 條件競爭：多執行緒存取共享變數無同步保護（此規則範例較抽象）
+  - id: cpp-multithread-race
+    languages: [cpp]
+    message: "請確認多執行緒共享變數存取有適當的同步機制保護。"
+    severity: WARNING
+    pattern: |
+      $VAR = ...;
+    metadata:
+      cwe: "CWE-362: Concurrent Execution using Shared Resource Without Synchronization"
+    # 注意：此規則僅為範例，實際檢查建議採用更專業的靜態工具或 CodeQL 分析
+
+  # 10. 邏輯錯誤檢查：檢查 if 條件是否為常數（例如 if(true)）
+  - id: cpp-logical-error
+    languages: [cpp]
+    message: "請確認 if 條件是否正確，避免因硬編碼常數導致邏輯錯誤。"
+    severity: WARNING
+    pattern: |
+      if (true) { ... }
+    metadata:
+      cwe: "CWE-398: Code Quality Issues"
+
+  # 11. 無限迴圈或死循環狀況
+  - id: cpp-infinite-loop
+    languages: [cpp]
+    message: "檢查迴圈是否有適當的跳出條件，避免無限迴圈。"
+    severity: WARNING
+    pattern: |
+      while(true) { ... }
+    metadata:
+      cwe: "CWE-835: Loop with Unreachable Exit Condition"
+
+  # 12. 未處理錯誤：例如檔案打開失敗未檢查
+  - id: cpp-unhandled-error
+    languages: [cpp]
+    message: "檢查函式呼叫（例如 fopen）後是否有檢查錯誤返回值。"
+    severity: WARNING
+    pattern: |
+      FILE *$FILE = fopen($FILENAME, $MODE);
+    pattern-not: |
+      if (!$FILE) { ... }
+    metadata:
+      cwe: "CWE-391: Unchecked Error Condition"
+
+  # 13. 硬編碼的認證資訊
+  - id: cpp-hardcoded-credentials
+    languages: [cpp]
+    message: "請避免硬編碼密碼或用戶名稱等認證資訊。"
+    severity: WARNING
+    pattern: |
+      "password"
+    metadata:
+      cwe: "CWE-798: Use of Hard-coded Credentials"
+
+  # 14. 未授權存取敏感檔案：例如 /etc/shadow
+  - id: cpp-sensitive-file-access
+    languages: [cpp]
+    message: "檢查是否存在對敏感檔案（如 /etc/shadow）的硬編碼存取。"
+    severity: ERROR
+    pattern: |
+      "/etc/shadow"
+    metadata:
+      cwe: "CWE-552: Files or Directories Accessible to External Parties"
+
+  # 15. 資訊洩漏：直接打印敏感資訊
+  - id: cpp-information-disclosure
+    languages: [cpp]
+    message: "請確認輸出訊息中不直接洩漏敏感資訊（例如密碼、秘密資料）。"
+    severity: WARNING
+    pattern: |
+      printf($MSG);
+    metadata:
+      cwe: "CWE-209: Information Exposure Through an Error Message"
+    # 擴充：可加入檢查字串內容是否包含敏感關鍵詞（例如 'password', 'secret'）
+
+  # 16. 資源飢餓問題：不斷忙碌的無限迴圈
+  - id: cpp-resource-starvation
+    languages: [cpp]
+    message: "檢查是否有可能導致 CPU 資源飢餓的無限忙碌迴圈。"
+    severity: WARNING
+    pattern: |
+      while(true) {
+          // busy waiting
+      }
+    metadata:
+      cwe: "CWE-400: Uncontrolled Resource Consumption"
+
+  # 17. 協定解析錯誤風險：協定解析未檢查錯誤
+  - id: cpp-protocol-parsing
+    languages: [cpp]
+    message: "檢查協定解析函式是否有完善的錯誤處理機制。"
+    severity: WARNING
+    pattern: |
+      parseProtocol($ARGS);
+    metadata:
+      cwe: "CWE-754: Improper Check for Unusual or Exceptional Conditions"
