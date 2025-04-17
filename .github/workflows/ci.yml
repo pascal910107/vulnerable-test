@@ -53,8 +53,21 @@ jobs:
         with:
           languages: cpp, java, javascript, python
           queries: |
-            ./codeql-queries/BufferOverflow.ql
-            ./codeql-queries/NullPointerDereference.ql
+            ./queries/BufferOverflow.ql
+            ./queries/UnboundedRecursion.ql
+            ./queries/UninitializedMemory.ql
+            ./queries/NullPointerDereference.ql
+            ./queries/DoubleFree.ql
+            ./queries/MemoryLeak.ql
+            ./queries/UncheckedInput.ql
+            ./queries/LogicalError.ql
+            ./queries/InfiniteLoop.ql
+            ./queries/UnhandledError.ql
+            ./queries/HardCodedCredentials.ql
+            ./queries/SensitiveFileAccess.ql
+            ./queries/InformationDisclosure.ql
+            ./queries/ResourceStarvation.ql
+            ./queries/ProtocolParsing.ql
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v2
