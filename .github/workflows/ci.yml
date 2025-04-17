@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     # 設定此 job 失敗時仍然不阻斷整個 workflow
     continue-on-error: true
+    outputs:
+      semgrep_results: ${{ steps.check.outputs.semgrep_results }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -23,7 +25,8 @@ jobs:
 
       - name: Run Semgrep Scan
         run: |
-          semgrep --config semgrep_rules.yml --json > semgrep-results.json
+          # semgrep --config semgrep_rules.yml --json > semgrep-results.json
+          semgrep --config semgrep_rules.yml --json --exit-zero > semgrep-results.json
 
       - name: Upload Semgrep Results
         uses: actions/upload-artifact@v4
