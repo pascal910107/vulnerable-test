@@ -57,7 +57,7 @@ jobs:
           queries: "./queries/BufferOverflow.ql,./queries/UnboundedRecursion.ql,./queries/UninitializedMemory.ql,./queries/NullPointerDereference.ql,./queries/DoubleFree.ql,./queries/MemoryLeak.ql,./queries/UncheckedInput.ql,./queries/LogicalError.ql,./queries/InfiniteLoop.ql,./queries/UnhandledError.ql,./queries/HardCodedCredentials.ql,./queries/SensitiveFileAccess.ql,./queries/InformationDisclosure.ql,./queries/ResourceStarvation.ql,./queries/ProtocolParsing.ql"
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v2
+        uses: github/codeql-action/autobuild@v3
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
