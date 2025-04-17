@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ "main", "develop", "*" ]
 
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+  security-events: write
+
 jobs:
   semgrep:
     name: Run Semgrep Scan
