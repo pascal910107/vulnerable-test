@@ -58,8 +58,7 @@ jobs:
 
       - name: Build with Custom Command
         run: |
-          # 編譯指令範例，如有需要調整編譯參數或檔案名稱，請自行修改
-          g++ -std=c++17 -g -o vulnerable vulnerable.cpp
+          g++ -std=c++17 -g -o vulnerable_compilable vulnerable_compilable.cpp
         
       # - name: Autobuild
         # uses: github/codeql-action/autobuild@v3
