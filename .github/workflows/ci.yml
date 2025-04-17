@@ -1,0 +1,63 @@
+name: Static Analysis (Semgrep & CodeQL)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  semgrep:
+    name: Run Semgrep Scan
+    runs-on: ubuntu-latest
+    # 設定此 job 失敗時仍然不阻斷整個 workflow
+    continue-on-error: true
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Semgrep
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install semgrep
+
+      - name: Run Semgrep Scan
+        run: |
+          semgrep --config semgrep_rules.yml --json > semgrep-results.json
+
+      - name: Upload Semgrep Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: semgrep-results
+          path: semgrep-results.json
+
+      # （此處可選擇解析結果或直接上傳結果）
+      - name: Check Semgrep Results
+        run: |
+          EXIT_CODE=$(cat semgrep-results.json | jq '.metadata.exit_code')
+          echo "Semgrep Exit Code: $EXIT_CODE"
+          # 這裡僅記錄結果，不強制令工作流程停止
+          exit 0
+
+  codeql:
+    name: Run CodeQL Analysis
+    runs-on: ubuntu-latest
+    # 使用 if: always() 確保即使其他 job 失敗也執行
+    if: always()
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: cpp, java, javascript, python
+          queries: |
+            ./codeql-queries/BufferOverflow.ql
+            ./codeql-queries/NullPointerDereference.ql
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
