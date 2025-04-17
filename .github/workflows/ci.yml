@@ -2,21 +2,21 @@ name: Static Analysis (Semgrep & CodeQL)
 
 on:
   push:
-    branches: [ "main", "develop", "*" ]
+    branches: ["main", "develop", "*"]
   pull_request:
-    branches: [ "main", "develop", "*" ]
+    branches: ["main", "develop", "*"]
 
 permissions:
   actions: read
   contents: read
   pull-requests: write
   security-events: write
+  packages: read
 
 jobs:
   semgrep:
     name: Run Semgrep Scan
     runs-on: ubuntu-latest
-    # 設定此 job 失敗時仍然不阻斷整個 workflow
     continue-on-error: true
     outputs:
       semgrep_results: ${{ steps.check.outputs.semgrep_results }}
@@ -42,41 +42,71 @@ jobs:
         with:
           sarif_file: semgrep-results.sarif
 
-      - name: Upload Semgrep Results
+      - name: Upload Semgrep Results Artifact
         uses: actions/upload-artifact@v4
         with:
           name: semgrep-results
           path: semgrep-results.json
 
-      # （此處可選擇解析結果或直接上傳結果）
       - name: Check Semgrep Results
+        id: check
         run: |
-          EXIT_CODE=$(cat semgrep-results.json | jq '.metadata.exit_code')
+          EXIT_CODE=$(jq '.metadata.exit_code' semgrep-results.json)
           echo "Semgrep Exit Code: $EXIT_CODE"
-          # 這裡僅記錄結果，不強制令工作流程停止
+          echo "::set-output name=semgrep_results::$EXIT_CODE"
           exit 0
 
-  # codeql:
-  #   name: Run CodeQL Analysis
-  #   runs-on: ubuntu-latest
-  #   # 使用 if: always() 確保即使其他 job 失敗也執行
-  #   if: always()
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v3
+  codeql:
+    name: Run CodeQL Analysis
+    needs: semgrep
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [cpp]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-  #     - name: Initialize CodeQL
-  #       uses: github/codeql-action/init@v3
-  #       with:
-  #         languages: cpp
-  #         queries: "./queries/BufferOverflow.ql,./queries/UnboundedRecursion.ql,./queries/UninitializedMemory.ql,./queries/NullPointerDereference.ql,./queries/DoubleFree.ql,./queries/MemoryLeak.ql,./queries/UncheckedInput.ql,./queries/LogicalError.ql,./queries/InfiniteLoop.ql,./queries/UnhandledError.ql,./queries/HardCodedCredentials.ql,./queries/SensitiveFileAccess.ql,./queries/InformationDisclosure.ql,./queries/ResourceStarvation.ql,./queries/ProtocolParsing.ql"
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: |
+            ./queries/BufferOverflow.ql
+            ./queries/UnboundedRecursion.ql
+            ./queries/UninitializedMemory.ql
+            ./queries/NullPointerDereference.ql
+            ./queries/DoubleFree.ql
+            ./queries/MemoryLeak.ql
+            ./queries/UncheckedInput.ql
+            ./queries/LogicalError.ql
+            ./queries/InfiniteLoop.ql
+            ./queries/UnhandledError.ql
+            ./queries/HardCodedCredentials.ql
+            ./queries/SensitiveFileAccess.ql
+            ./queries/InformationDisclosure.ql
+            ./queries/ResourceStarvation.ql
+            ./queries/ProtocolParsing.ql
 
-  #     - name: Build with Custom Command
-  #       run: |
-  #         g++ -std=c++17 -g -o vulnerable_compilable vulnerable_compilable.cpp
-        
-  #     # - name: Autobuild
-  #       # uses: github/codeql-action/autobuild@v3
+      - name: Build with Custom Command
+        if: matrix.language == 'cpp'
+        run: |
+          g++ -std=c++17 -g -o vulnerable_compilable vulnerable_compilable.cpp
 
-      # - name: Perform CodeQL Analysis
-      #   uses: github/codeql-action/analyze@v3
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+
+      # 如需額外上傳 SARIF，可取消下列註解並調整路徑：
+      - name: Upload CodeQL SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: codeql-results.sarif
